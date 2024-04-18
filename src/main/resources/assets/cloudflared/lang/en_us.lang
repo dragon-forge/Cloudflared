@@ -1,0 +1,6 @@
+# Cloudflared Locals
+
+chat.cloudflared:tunnel_open=Tunnel opened to %s. Share this address with your friends and enjoy!
+chat.cloudflared:tunnel_open_unknown=Tunnel is probably open, but the mod was unable to obtain the address. Please check game logs.
+chat.cloudflared:click_to_suggest=Click to suggest in chatbox. (You can copy using Ctrl+A and Ctrl+C key combinations)
+chat.cloudflared:starting_tunnel=Starting up Cloudflared tunnel...
