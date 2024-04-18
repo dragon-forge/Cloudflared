@@ -47,7 +47,8 @@ public class ClientProxy1122
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)
 		{
-			createToast(InfoLevel.CRITICAL, "", "");
+			CloudflaredForge.LOG.fatal("Unable to create communicate with cloudflared. Are you sure you have cloudflared installed?", ex);
+			createToast(InfoLevel.CRITICAL, "Error", "Unable to access Cloudflared.");
 		}
 		
 		MinecraftForge.EVENT_BUS.register(this);

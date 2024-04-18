@@ -6,8 +6,8 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.common.event.*;
 import org.zeith.cloudflared.core.*;
 import org.zeith.cloudflared.core.api.*;
-import org.zeith.cloudflared.forge1122.Configs1122;
-import org.zeith.cloudflared.forge1122.MCGameSession1122;
+import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
+import org.zeith.cloudflared.forge1122.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -24,13 +24,19 @@ public class ServerProxy1122
 	@Override
 	public void preInit(FMLPreInitializationEvent e)
 	{
-		api = CloudflaredAPIFactory.builder()
-				.gameProxy(this)
-				.autoDownload(Configs1122.autodownload)
-				.hostname(() -> Configs1122.hostname)
-				.executable(() -> Configs1122.executable)
-				.build()
-				.createApi();
+		try
+		{
+			api = CloudflaredAPIFactory.builder()
+					.gameProxy(this)
+					.autoDownload(Configs1122.autodownload)
+					.hostname(() -> Configs1122.hostname)
+					.executable(() -> Configs1122.executable)
+					.build()
+					.createApi();
+		} catch(CloudflaredNotFoundException ex)
+		{
+			CloudflaredForge.LOG.fatal("Unable to create communicate with cloudflared. Are you sure you have cloudflared installed?", ex);
+		}
 	}
 	
 	@Override
