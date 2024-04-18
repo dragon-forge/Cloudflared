@@ -1,19 +1,6 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://repo.spongepowered.org/maven' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.76'
-    }
-}
 
-apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'idea'
-apply plugin: 'maven-publish'
 apply plugin: 'java'
-apply from: 'https://maven.zeith.org/org/zeith/FixupFML/fix-v1.0.1-usercache.gradle'
 
 ext.configFile = file("build.txt")
 configFile.withReader {
@@ -31,61 +18,6 @@ archivesBaseName = "${config.mod_id_fancy}-${config.minecraft_version}"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
-minecraft {
-    mappings channel: 'stable', version: '39-1.12'
-    accessTransformers(
-            file('libraries/tc_at.cfg'), // required for TC to function
-            file('src/main/resources/META-INF/accesstransformer.cfg')
-    )
-
-    runs {
-        client {
-            workingDirectory project.file('run/client')
-
-            jvmArgs([
-                    '-Dfml.coreMods.load=org.zeith.cloudflared.forge1122.coremod.CloudflaredCoremod1122,com.zeitheron.hammercore.asm.HCASM',
-                    '-Dmixin.checks.interfaces=true',
-                    '-Dmixin.debug.export=true',
-                    "-XX:+UseConcMarkSweepGC",
-                    "-XX:-UseAdaptiveSizePolicy"
-            ])
-
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
-            property 'log4j.configurationFile', 'log4j2.xml'
-            args([
-                    "-username",
-                    System.env.MC_USERNAME
-            ])
-        }
-
-        server {
-            workingDirectory project.file('run/server')
-
-            jvmArgs([
-                    '-Dfml.coreMods.load=org.zeith.cloudflared.forge1122.coremod.CloudflaredCoremod1122,com.zeitheron.hammercore.asm.HCASM',
-                    '-Dmixin.checks.interfaces=true',
-                    '-Dmixin.debug.export=true',
-                    "-XX:+UseConcMarkSweepGC",
-                    "-XX:-UseAdaptiveSizePolicy"
-            ])
-
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
-            property 'log4j.configurationFile', 'log4j2.xml'
-        }
-    }
-}
-
-configurations {
-    embed
-    tcImplementation
-    tcModsFolder
-    implementation.extendsFrom(embed)
-    implementation.extendsFrom(tcImplementation)
-    implementation.extendsFrom(tcModsFolder)
-}
-
 repositories {
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     mavenCentral()
@@ -102,233 +34,17 @@ repositories {
 }
 
 dependencies {
-    implementation("net.minecraftforge:mergetool:0.2.3.3") { force = true }
-    minecraft "net.minecraftforge:forge:${config.minecraft_version}-${config.forge_version}"
-
-    def deps = new String(Base64.getDecoder().decode(tc_build_data)).replace('\r', '').replace('\n', '').split("[|]")
-    for (final def d in deps) {
-        if (d.endsWith(">")) {
-            d = d.substring(0, d.length() - 1)
-            if (d.endsWith("!")) tcModsFolder d.substring(0, d.length() - 1)
-            else tcModsFolder fg.deobf(d)
-            continue
-        }
-
-        if (d.endsWith("!")) tcImplementation d.substring(0, d.length() - 1)
-        else tcImplementation fg.deobf(d)
-    }
-
     ////// UTILITY STUFF //////
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
     compileOnly 'org.jetbrains:annotations:24.0.1'
     ///////////////////////////
 
-    def libraries = new File(file("libraries"), "${config.minecraft_version}")
-    if (!libraries.isDirectory()) libraries.mkdirs()
-
-    def libDir = new File(libraries, "all");
-    if (libDir.isDirectory()) {
-        libDir.eachFile { file ->
-            def splitPos = file.name.lastIndexOf("-")
-            def modartifact = file.name.substring(0, splitPos)
-            def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
-            dependencies {
-                implementation project.dependencies.create("_all:$modartifact:$modversion")
-            }
-        }
-    } else libDir.mkdir();
-
-    libDir = new File(libraries, "classpathOnly");
-    if (libDir.isDirectory()) {
-        libDir.eachFile { file ->
-            def splitPos = file.name.lastIndexOf("-")
-            def modartifact = file.name.substring(0, splitPos)
-            def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
-            dependencies {
-                compileOnly project.dependencies.create("_classpath:$modartifact:$modversion")
-            }
-        }
-    } else libDir.mkdir();
-
-    libDir = new File(libraries, "runtimeOnly");
-    if (libDir.isDirectory()) {
-        libDir.eachFile { file ->
-            def splitPos = file.name.lastIndexOf("-")
-            def modartifact = file.name.substring(0, splitPos)
-            def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
-            dependencies {
-                runtimeOnly project.dependencies.create("_runtime:$modartifact:$modversion")
-            }
-        }
-    } else libDir.mkdir();
+    implementation('com.google.guava:guava:29.0-jre')
+    implementation('org.apache.logging.log4j:log4j-api:2.23.1')
 }
 
 def startTasks = gradle.startParameter.taskNames
 def intellijIDE = (System.getProperty("idea.sync.active") == "true" || System.getProperty("idea.active") == "true") && !startTasks.contains("build") && !startTasks.contains("buildAndUploadMod") && !startTasks.contains("publishAllPublicationsToMavenRepository") && !startTasks.contains("publish") && !startTasks.contains("jar")
 
 println "Running IntelliJ IDE: " + intellijIDE
-
-task cleanReplaces(type: Delete) {
-    delete "build/sources/replaced"
-}
-
-def replaceMap = [
-        "@VERSION@": config.mod_version
-];
-
-if (tasks.contains(build) && !intellijIDE) {
-
-    task applyReplaces(type: Copy) {
-        from('src/main/java')
-        into 'build/sources/replaced'
-
-        filter { line ->
-            for (final def entry in replaceMap.entrySet()) {
-                line = line.replace(entry.key, entry.value)
-            }
-            return line
-        }
-    }
-
-    compileJava.dependsOn applyReplaces
-
-    sourceSets {
-        main {
-            java {
-                srcDirs = ["build/sources/replaced"]
-            }
-        }
-    }
-}
-
-processResources {
-    inputs.property "version", config.mod_version
-    inputs.property "mcversion", config.minecraft_version
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-        include 'pack.mcmeta'
-        expand 'version': config.mod_version, 'mcversion': config.minecraft_version
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-        exclude 'pack.mcmeta'
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-}
-
-jar {
-    from(configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }) {
-        exclude 'LICENSE.txt', 'META-INF/MANIFEST.MF', 'META-INF/maven/**', 'META-INF/*.RSA', 'META-INF/*.SF'
-    }
-
-    manifest {
-        attributes([
-                "ForceLoadAsMod"             : "true",
-                "FMLCorePlugin"              : "org.zeith.cloudflared.forge1122.coremod.CloudflaredCoremod1122",
-                "FMLCorePluginContainsFMLMod": "false",
-                "Specification-Title"        : config.mod_name,
-                "Specification-Vendor"       : config.author,
-                "Specification-Version"      : "1", // We are version 1 of ourselves
-                "Implementation-Title"       : config.mod_name,
-                "Implementation-Version"     : config.mod_version,
-                "Implementation-Vendor"      : config.author,
-                "Implementation-Timestamp"   : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-}
-
-import net.minecraftforge.gradle.common.tasks.SignJar
-import java.nio.file.Files
-
-task signJar(type: SignJar, dependsOn: jar) {
-    onlyIf {
-        System.env.MC_KS_PASS != null
-    }
-    keyStore = System.env.MC_KS_PATH
-    alias = System.env.MC_KS_ALIAS
-    storePass = System.env.MC_KS_PASS
-    keyPass = System.env.MC_KS_PASS
-    inputFile = jar.archiveFile
-    outputFile = jar.archiveFile
-}
-
-jar.finalizedBy('reobfJar')
-publish.dependsOn('reobfJar')
-build.dependsOn signJar
-assemble.finalizedBy('signJar')
-signJar.finalizedBy('cleanReplaces')
-
-task deobfJar(type: Jar) {
-    archiveClassifier = 'deobf'
-    from sourceSets.main.output
-    manifest {
-        attributes([
-                "FMLAT"                   : "accesstransformer.cfg",
-                "Specification-Title"     : config.mod_name,
-                "Specification-Vendor"    : config.author,
-                "Specification-Version"   : "1",
-                "Implementation-Title"    : config.mod_name,
-                "Implementation-Version"  : archiveVersion,
-                "Implementation-Vendor"   : config.author,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-}
-
-task srcJar(type: Jar, dependsOn: classes) {
-    from sourceSets.main.allJava
-    archiveClassifier = 'sources'
-}
-
-artifacts {
-    archives deobfJar
-    archives srcJar
-}
-
-tasks.register('copyTerrariaCraftDepsToRuntime') {
-    doLast {
-        def directories = []
-        minecraft.runs.each {
-            def f = new File(it.workingDirectory, "mods")
-            directories.add(f)
-            f.mkdirs()
-            f.listFiles().each {
-                if (it.getName().startsWith("__gradle__"))
-                    it.delete()
-            }
-        }
-        configurations.tcModsFolder.files.each {
-            directories.each { File dir ->
-                def runFile = new File(dir, "__gradle__${it.name}")
-                runFile.delete()
-                Files.copy(it.toPath(), runFile.toPath())
-            }
-        }
-    }
-}
-
-afterEvaluate {
-    tasks['downloadAssets'].dependsOn.add('copyTerrariaCraftDepsToRuntime')
-
-    tasks['downloadAssets'].dependsOn.add('fixupForgeJars')
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = "${config.maven_group}"
-            artifactId = config.mod_id_fancy + "-" + config.minecraft_version
-
-            artifact jar
-            artifact srcJar
-            artifact deobfJar
-        }
-    }
-    repositories {
-        maven {
-            url config.maven_url
-        }
-    }
-}

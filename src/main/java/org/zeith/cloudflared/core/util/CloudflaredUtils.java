@@ -1,9 +1,6 @@
 package org.zeith.cloudflared.core.util;
 
-import com.zeitheron.hammercore.utils.java.OSArch;
-
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
