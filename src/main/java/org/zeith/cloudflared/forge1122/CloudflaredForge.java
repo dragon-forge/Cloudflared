@@ -12,7 +12,8 @@ import org.zeith.cloudflared.forge1122.proxy.CommonProxy1122;
 		guiFactory = "org.zeith.cloudflared.forge1122.ConfigFactory",
 		certificateFingerprint = "9f5e2a811a8332a842b34f6967b7db0ac4f24856",
 		updateJSON = "https://api.modrinth.com/updates/PlkSuVtM/forge_updates.json",
-		acceptedMinecraftVersions = "[1.12.2]"
+		acceptedMinecraftVersions = "[1.12.2]",
+		dependencies = "required-after:hammercore"
 )
 public class CloudflaredForge
 {

@@ -105,18 +105,7 @@ dependencies {
     implementation("net.minecraftforge:mergetool:0.2.3.3") { force = true }
     minecraft "net.minecraftforge:forge:${config.minecraft_version}-${config.forge_version}"
 
-    def deps = new String(Base64.getDecoder().decode(tc_build_data)).replace('\r', '').replace('\n', '').split("[|]")
-    for (final def d in deps) {
-        if (d.endsWith(">")) {
-            d = d.substring(0, d.length() - 1)
-            if (d.endsWith("!")) tcModsFolder d.substring(0, d.length() - 1)
-            else tcModsFolder fg.deobf(d)
-            continue
-        }
-
-        if (d.endsWith("!")) tcImplementation d.substring(0, d.length() - 1)
-        else tcImplementation fg.deobf(d)
-    }
+    tcImplementation fg.deobf("org.zeith.HammerLib:HammerLib-1.12.2:${config.hl_version}")
 
     ////// UTILITY STUFF //////
     compileOnly 'org.projectlombok:lombok:1.18.30'
@@ -174,7 +163,8 @@ task cleanReplaces(type: Delete) {
 }
 
 def replaceMap = [
-        "@VERSION@": config.mod_version
+        "@VERSION@": config.mod_version,
+        "required-after:hammercore": "required-after:hammercore@[${config.hl_version},)"
 ];
 
 if (tasks.contains(build) && !intellijIDE) {
