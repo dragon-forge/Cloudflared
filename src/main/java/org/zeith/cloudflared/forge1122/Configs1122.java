@@ -97,10 +97,16 @@ public class Configs1122
 		return configInstance;
 	}
 	
+	private static long lastReload = System.currentTimeMillis();
+	
 	@Override
 	public void reloadCustom(Configuration cfgs)
 	{
 		cfg = cfgs;
+		if(System.currentTimeMillis() - lastReload < 1000L) return;
 		CloudflaredForge.LOG.info("Reloaded configs.");
+		if(CloudflaredForge.PROXY.getApi().isPresent()) return;
+		CloudflaredForge.PROXY.tryCreateApi();
+		lastReload = System.currentTimeMillis();
 	}
 }

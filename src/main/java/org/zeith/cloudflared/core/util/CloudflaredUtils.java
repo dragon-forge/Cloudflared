@@ -79,6 +79,6 @@ public class CloudflaredUtils
 		if(OSArch.getArchitecture().getType() == OSArch.OSType.MACOS)
 			return process(new ProcessBuilder("brew install cloudflared".split(" ")).inheritIO(), null);
 		
-		return CompletableFuture.completedFuture(0);
+		return CompletableFuture.completedFuture(null);
 	}
 }

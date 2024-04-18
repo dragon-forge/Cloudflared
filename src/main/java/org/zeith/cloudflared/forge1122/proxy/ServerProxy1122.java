@@ -8,6 +8,7 @@ import org.zeith.cloudflared.core.*;
 import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 import org.zeith.cloudflared.forge1122.*;
+import org.zeith.cloudflared.forge1122.command.CommandCloudflared;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -15,14 +16,14 @@ import java.util.concurrent.ExecutorService;
 public class ServerProxy1122
 		implements CommonProxy1122
 {
-	protected CloudflaredAPI api;
+	private CloudflaredAPI api;
 	protected final List<IGameListener> listeners = new ArrayList<>();
 	
 	public IGameSession startedSession;
 	protected MinecraftServer server;
 	
 	@Override
-	public void preInit(FMLPreInitializationEvent e)
+	public void tryCreateApi()
 	{
 		try
 		{
@@ -48,10 +49,22 @@ public class ServerProxy1122
 	}
 	
 	@Override
+	public Optional<CloudflaredAPI> getApi()
+	{
+		return Optional.ofNullable(api);
+	}
+	
+	@Override
+	public void serverStarting(FMLServerStartingEvent e)
+	{
+		e.registerServerCommand(new CommandCloudflared());
+	}
+	
+	@Override
 	public void serverStarted(FMLServerAboutToStartEvent e)
 	{
 		server = e.getServer();
-		api.closeAllAccesses();
+		if(api != null) api.closeAllAccesses();
 		if(Configs1122.startTunnel)
 		{
 			server.sendMessage(new TextComponentTranslation("chat.cloudflared:starting_tunnel"));

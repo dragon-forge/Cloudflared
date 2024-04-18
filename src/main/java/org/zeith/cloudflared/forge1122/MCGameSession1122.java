@@ -28,7 +28,14 @@ public class MCGameSession1122
 		
 		if(hostnameSTR == null)
 		{
-			owner.sendMessage(new TextComponentTranslation("chat.cloudflared:tunnel_open_unknown"));
+			ITextComponent txt = new TextComponentTranslation("chat.cloudflared:game_logs")
+					.setStyle(new Style()
+							.setColor(TextFormatting.BLUE)
+							.setUnderlined(true)
+							.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("chat.cloudflared:click_to_open")))
+							.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CloudflaredForge.PROXY.getLatestLogFile().getAbsolutePath()))
+					);
+			owner.sendMessage(new TextComponentTranslation("chat.cloudflared:tunnel_open_unknown", txt));
 			return;
 		}
 		

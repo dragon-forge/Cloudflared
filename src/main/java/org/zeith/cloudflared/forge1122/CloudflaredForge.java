@@ -29,6 +29,12 @@ public class CloudflaredForge
 	}
 	
 	@Mod.EventHandler
+	public void serverStarting(FMLServerStartingEvent e)
+	{
+		PROXY.serverStarting(e);
+	}
+	
+	@Mod.EventHandler
 	public void serverAboutToStart(FMLServerAboutToStartEvent e)
 	{
 		PROXY.serverStarted(e);

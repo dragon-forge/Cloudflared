@@ -9,6 +9,8 @@ import net.minecraft.client.multiplayer.ServerAddress;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.text.*;
+import net.minecraft.util.text.event.*;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.*;
@@ -18,7 +20,8 @@ import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 import org.zeith.cloudflared.core.process.CFDAccess;
 import org.zeith.cloudflared.forge1122.*;
-import org.zeith.cloudflared.forge1122.client.*;
+import org.zeith.cloudflared.forge1122.client.GuiShareToLanCloudflared;
+import org.zeith.cloudflared.forge1122.command.CommandCloudflared;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -28,13 +31,13 @@ import java.util.concurrent.ExecutorService;
 public class ClientProxy1122
 		implements CommonProxy1122
 {
-	protected CloudflaredAPI api;
+	private CloudflaredAPI api;
 	protected final List<IGameListener> listeners = new ArrayList<>();
 	
 	public IGameSession startedSession;
 	
 	@Override
-	public void preInit(FMLPreInitializationEvent e)
+	public void tryCreateApi()
 	{
 		try
 		{
@@ -47,17 +50,36 @@ public class ClientProxy1122
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)
 		{
-			CloudflaredForge.LOG.fatal("Unable to create communicate with cloudflared. Are you sure you have cloudflared installed?", ex);
+			CloudflaredForge.LOG.fatal("Unable to communicate with cloudflared. Are you sure you have cloudflared installed?", ex);
 			createToast(InfoLevel.CRITICAL, "Error", "Unable to access Cloudflared.");
 		}
-		
+	}
+	
+	@Override
+	public void preInit(FMLPreInitializationEvent e)
+	{
+		CommonProxy1122.super.preInit(e);
+		if(api == null)
+		{
+			ChatMessageAdapter.sendOnFirstWorldLoad(new TextComponentTranslation("chat.cloudflared:not_installed")
+					.appendText(" ")
+					.appendSibling(new TextComponentTranslation("chat.cloudflared:not_installed.click")
+							.setStyle(new Style()
+									.setColor(TextFormatting.BLUE)
+									.setUnderlined(true)
+									.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("/cloudflared install")))
+									.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cloudflared install"))
+							)
+					));
+		}
+		ClientCommandHandler.instance.registerCommand(new CommandCloudflared());
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	public void overrideShareToLanGUI(GuiOpenEvent e)
 	{
-		if(e.getGui() instanceof GuiShareToLan)
+		if(e.getGui() instanceof GuiShareToLan && api != null)
 		{
 			try
 			{
@@ -75,7 +97,7 @@ public class ClientProxy1122
 	@Override
 	public void serverStarted(FMLServerAboutToStartEvent e)
 	{
-		if(e.getServer() instanceof IntegratedServer)
+		if(e.getServer() instanceof IntegratedServer && api != null)
 			api.closeAllAccesses();
 	}
 	
@@ -96,6 +118,12 @@ public class ClientProxy1122
 		startedSession = session;
 		for(IGameListener listener : listeners)
 			listener.onHostingStart(session);
+	}
+	
+	@Override
+	public Optional<CloudflaredAPI> getApi()
+	{
+		return Optional.ofNullable(api);
 	}
 	
 	public List<IGameListener> getListeners()
@@ -157,7 +185,12 @@ public class ClientProxy1122
 		
 		String hostname = input.substring(14);
 		
-		CFDAccess tunnel = ((ClientProxy1122) CloudflaredForge.PROXY).api.getOrOpenAccess(hostname);
+		CFDAccess tunnel = CloudflaredForge.PROXY
+				.getApi()
+				.map(a -> a.getOrOpenAccess(hostname))
+				.orElse(null);
+		
+		if(tunnel == null) return null;
 		
 		int openPort = tunnel.getOpenFuture().join();
 		

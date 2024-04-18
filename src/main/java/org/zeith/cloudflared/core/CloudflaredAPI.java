@@ -45,14 +45,22 @@ public class CloudflaredAPI
 		} catch(Throwable e)
 		{
 			LOG.info("Failed to get version of {}.", exe);
-			throw new CloudflaredNotFoundException("Cloudflared not found");
+			if(!configs.isAutoDownload())
+				throw new CloudflaredNotFoundException("Cloudflared not found");
 		}
 		
 		if(ver == null && configs.isAutoDownload())
 		{
 			LOG.info("Attempting to auto-download Cloudflared...");
-			CloudflaredUtils.winget().join();
-			ver = getVersionFuture().join();
+			try
+			{
+				CloudflaredUtils.winget().join();
+				ver = getVersionFuture().join();
+			} catch(Throwable e)
+			{
+				LOG.info("Failed to get version of {}.", exe);
+				throw new CloudflaredNotFoundException("Cloudflared not found");
+			}
 		}
 		
 		this.version = ver;
