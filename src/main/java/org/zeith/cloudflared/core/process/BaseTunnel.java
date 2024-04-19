@@ -62,7 +62,8 @@ public abstract class BaseTunnel
 			while(in.hasNextLine())
 				processLn(preprocessLn(in.nextLine()));
 			
-			startedProcess.waitFor();
+			if(startedProcess != null)
+				startedProcess.waitFor();
 			markClosed();
 		} catch(InterruptedException ignored)
 		{
