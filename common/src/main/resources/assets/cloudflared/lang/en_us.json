@@ -1,0 +1,24 @@
+{
+  "_comment": "Cloudflared Locals",
+
+  "chat.cloudflared:not_installed": "We have detected that you don't have Cloudflared installed.",
+  "chat.cloudflared:not_installed.click": "Click here to attempt automatic installation.",
+
+  "chat.cloudflared:starting_tunnel": "Starting up Cloudflared tunnel...",
+  "chat.cloudflared:tunnel_open": "Tunnel opened to %s. This address can be either added as a server, or be directly connected to from Multiplayer screen.",
+  "chat.cloudflared:game_logs": "game logs",
+  "chat.cloudflared:tunnel_open_unknown": "Tunnel is probably open, but the mod was unable to obtain the address. Please check %s to see details.",
+  "chat.cloudflared:click_to_copy": "Click to copy.",
+  "chat.cloudflared:click_to_open": "Click to open file",
+
+  "chat.cloudflared:open_url": "Click to open URL",
+  "chat.cloudflared:here": "here",
+
+  "command.cloudflared:install.installed": "Cloudflared is already installed on your system.",
+  "command.cloudflared:install.started": "The download process of Cloudflared has been started.",
+  "command.cloudflared:install.unsupported_os": "Installation is not supported on your OS (determined as %s). Click %s to open download page.",
+  "command.cloudflared:install.install_done": "Installation complete with code %s. Attempting to load cloudflared...",
+  "command.cloudflared:install.ok": "Cloudflared software is ready. Version: %s.",
+  "command.cloudflared:install.nope": "Cloudflared software did not install. Try installing manually from %s.",
+  "command.cloudflared:install.restart": "Please restart the game to use the mod."
+}
