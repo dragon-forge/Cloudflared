@@ -15,9 +15,14 @@ public interface IGameProxy
 	
 	void createToast(InfoLevel level, String title, String subtitle);
 	
+	default IFileDownload pushFileDownload()
+	{
+		return IFileDownload.DUMMY;
+	}
+	
 	default File getExtraDataDir()
 	{
-		File f = new File("asm", "cloudflared");
+		File f = new File("asm", "Cloudflared");
 		if(f.isFile()) f.delete();
 		if(!f.isDirectory()) f.mkdirs();
 		return f;

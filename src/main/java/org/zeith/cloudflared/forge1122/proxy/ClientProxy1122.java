@@ -2,6 +2,7 @@ package org.zeith.cloudflared.forge1122.proxy;
 
 import com.zeitheron.hammercore.client.adapter.ChatMessageAdapter;
 import com.zeitheron.hammercore.client.utils.gl.shading.VariableShaderProgram;
+import com.zeitheron.hammercore.utils.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.toasts.*;
@@ -13,6 +14,7 @@ import net.minecraft.util.text.event.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.*;
 import org.zeith.cloudflared.core.*;
@@ -25,6 +27,7 @@ import org.zeith.cloudflared.forge1122.command.CommandCloudflared;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
+import java.util.Optional;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -35,6 +38,8 @@ public class ClientProxy1122
 	protected final List<IGameListener> listeners = new ArrayList<>();
 	
 	public IGameSession startedSession;
+	
+	protected Thread gameThread;
 	
 	@Override
 	public void tryCreateApi()
@@ -48,14 +53,68 @@ public class ClientProxy1122
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)
 		{
+			api = null;
 			CloudflaredForge.LOG.fatal("Unable to communicate with cloudflared. Are you sure you have cloudflared installed?", ex);
 			createToast(InfoLevel.CRITICAL, "Error", "Unable to access Cloudflared.");
 		}
 	}
 	
 	@Override
+	public IFileDownload pushFileDownload()
+	{
+		if(gameThread != Thread.currentThread())
+			return IFileDownload.DUMMY;
+		return new IFileDownload()
+		{
+			ProgressManager.ProgressBar bar;
+			final int totalSteps = 1000;
+			int stepsLeft = totalSteps;
+			
+			long lastUpdateLen;
+			long lastUpdateMs;
+			
+			@Override
+			public void onStart()
+			{
+				onEnd();
+				bar = ProgressManager.push("Downloading Cloudflared", totalSteps);
+			}
+			
+			@Override
+			public void onUpload(long uploaded, long total)
+			{
+				long bpp = total / totalSteps;
+				if(uploaded - lastUpdateLen > bpp)
+				{
+					if(stepsLeft > 0)
+					{
+						bar.step(FileSizeMetric.toMaxSize(uploaded) + " / " + FileSizeMetric.toMaxSize(total));
+						--stepsLeft;
+					}
+					lastUpdateLen = uploaded;
+				} else if(System.currentTimeMillis() - lastUpdateMs > 50L)
+				{
+					setMessage(bar, FileSizeMetric.toMaxSize(uploaded) + " / " + FileSizeMetric.toMaxSize(total));
+					lastUpdateMs = System.currentTimeMillis();
+				}
+			}
+			
+			@Override
+			public void onEnd()
+			{
+				if(bar == null) return;
+				while(bar.getStep() < bar.getSteps())
+					bar.step("");
+				ProgressManager.pop(bar);
+				bar = null;
+			}
+		};
+	}
+	
+	@Override
 	public void preInit(FMLPreInitializationEvent e)
 	{
+		gameThread = Thread.currentThread();
 		CommonProxy1122.super.preInit(e);
 		if(api == null)
 		{
@@ -193,5 +252,25 @@ public class ClientProxy1122
 		int openPort = tunnel.getOpenFuture().join();
 		
 		return ServerAddress.fromString("127.0.0.1:" + openPort);
+	}
+	
+	public static Field pbMsg, pbLastTime;
+	
+	public static void setMessage(ProgressManager.ProgressBar bar, String msg)
+	{
+		if(pbMsg == null)
+			pbMsg = ReflectionUtil.getField(ProgressManager.ProgressBar.class, "message");
+		if(pbLastTime == null)
+			pbLastTime = ReflectionUtil.getField(ProgressManager.ProgressBar.class, "lastTime");
+		try
+		{
+			msg = FMLCommonHandler.instance().stripSpecialChars(msg);
+			pbMsg.set(bar, msg);
+			pbLastTime.setLong(bar, System.nanoTime());
+			FMLCommonHandler.instance().processWindowMessages();
+		} catch(IllegalAccessException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

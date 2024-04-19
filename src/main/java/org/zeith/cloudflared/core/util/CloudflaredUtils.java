@@ -2,14 +2,12 @@ package org.zeith.cloudflared.core.util;
 
 import com.zeitheron.hammercore.utils.java.Hashers;
 import org.apache.logging.log4j.*;
-import org.zeith.cloudflared.core.api.IGameProxy;
-import org.zeith.cloudflared.forge1122.CloudflaredForge;
+import org.zeith.cloudflared.core.api.*;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
@@ -17,7 +15,7 @@ public class CloudflaredUtils
 {
 	static final Logger LOG = LogManager.getLogger("CloudflaredAPI/Utils");
 	
-	static CompletableFuture<Integer> download(String url, File to, File etag, Executor exe)
+	static CompletableFuture<Integer> download(String url, File to, File etag, Executor exe, IFileDownload progress)
 	{
 		return CompletableFuture.supplyAsync(() ->
 		{
@@ -33,7 +31,12 @@ public class CloudflaredUtils
 				
 				LOG.info("Download URL hash: {}", urlSha);
 				
-				if(etag.isFile() && new String(Files.readAllBytes(etag.toPath()), StandardCharsets.UTF_8).equals(urlSha))
+				List<String> lines;
+				
+				if(to.isFile() && etag.isFile()
+				   && (lines = Files.readAllLines(etag.toPath())).size() > 1
+				   && lines.get(0).equals(urlSha)
+				   && lines.get(1).equals(Hashers.SHA1.hashifyHex(Files.readAllBytes(to.toPath()))))
 				{
 					tmp.delete();
 					if(!to.canExecute()) to.setExecutable(true);
@@ -41,11 +44,23 @@ public class CloudflaredUtils
 					return 0;
 				}
 				
-				r.receive(tmp);
-				to.delete();
-				if(!to.canExecute()) to.setExecutable(true);
-				if(tmp.renameTo(to))
-					Files.write(etag.toPath(), urlSha.getBytes(StandardCharsets.UTF_8));
+				progress.onStart();
+				try(IFileDownload ignore = progress)
+				{
+					r.progress(progress)
+							.incrementTotalSize(r.contentLength())
+							.receive(tmp);
+					
+					to.delete();
+					if(!to.canExecute()) to.setExecutable(true);
+					
+					if(tmp.renameTo(to))
+						Files.write(etag.toPath(), Arrays.asList(
+								urlSha,
+								Hashers.SHA1.hashifyHex(Files.readAllBytes(to.toPath()))
+						));
+				}
+				
 				return code / 100 < 4 ? 0 : code;
 			} catch(IOException e)
 			{
@@ -133,7 +148,7 @@ public class CloudflaredUtils
 			if(instructions == OSArch.InstructionSet.X86) url += "cloudflared-windows-386.exe";
 			else url += "cloudflared-windows-amd64.exe";
 			
-			return download(url, new File(proxy.getExtraDataDir(), "cloudflared.exe"), etag, proxy.getBackgroundExecutor());
+			return download(url, new File(proxy.getExtraDataDir(), "cloudflared.exe"), etag, proxy.getBackgroundExecutor(), proxy.pushFileDownload());
 		}
 		
 		if(architecture == OSArch.ArchDistro.GNU_LINUX)
@@ -145,7 +160,7 @@ public class CloudflaredUtils
 			else if(instructions == OSArch.InstructionSet.ARM_64) url += "cloudflared-linux-arm64";
 			
 			File cfe = new File(proxy.getExtraDataDir(), "cloudflared");
-			return download(url, cfe, etag, proxy.getBackgroundExecutor()).thenApply(i ->
+			return download(url, cfe, etag, proxy.getBackgroundExecutor(), proxy.pushFileDownload()).thenApply(i ->
 			{
 				if(!cfe.canExecute())
 					cfe.setExecutable(true);
@@ -157,7 +172,7 @@ public class CloudflaredUtils
 		{
 			String url = baseUrl + "cloudflared-darwin-amd64.tgz";
 			File dst = new File(proxy.getExtraDataDir(), "cloudflared.tgz");
-			return download(url, dst, etag, proxy.getBackgroundExecutor()).thenCompose(i ->
+			return download(url, dst, etag, proxy.getBackgroundExecutor(), proxy.pushFileDownload()).thenCompose(i ->
 			{
 				if(!dst.isFile()) return CompletableFuture.completedFuture(i);
 				File tmp = new File(proxy.getExtraDataDir(), "cloudflared-tmp");

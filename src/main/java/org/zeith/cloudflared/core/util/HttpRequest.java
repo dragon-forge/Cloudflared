@@ -2876,7 +2876,7 @@ public class HttpRequest
 		return this;
 	}
 	
-	private HttpRequest incrementTotalSize(final long size)
+	public HttpRequest incrementTotalSize(final long size)
 	{
 		if(totalSize == -1)
 			totalSize = 0;
@@ -2894,9 +2894,9 @@ public class HttpRequest
 	protected HttpRequest closeOutput()
 			throws IOException
 	{
-		progress(null);
 		if(output == null)
 			return this;
+		progress(null);
 		if(multipart)
 			output.write(CRLF + "--" + BOUNDARY + "--" + CRLF);
 		if(ignoreCloseExceptions)

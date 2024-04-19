@@ -40,7 +40,11 @@ public class CloudflaredAPI
 	{
 		this.configs = configs;
 		
-		this.executableFilePath = new File(getGame().getExtraDataDir(),
+		File extraDataDir = getGame().getExtraDataDir();
+		if(extraDataDir.isFile()) extraDataDir.delete();
+		extraDataDir.mkdirs();
+		
+		this.executableFilePath = new File(extraDataDir,
 				"cloudflared" + (OSArch.getArchitecture().getType() == OSArch.OSType.WINDOWS ? ".exe" : "")
 		);
 		
@@ -66,7 +70,7 @@ public class CloudflaredAPI
 			} catch(Throwable e)
 			{
 				LOG.info("Failed to download cloudflared.");
-				throw new CloudflaredNotFoundException("Cloudflared not found");
+				throw new CloudflaredNotFoundException("Cloudflared not found", e);
 			}
 			try
 			{
@@ -74,7 +78,7 @@ public class CloudflaredAPI
 			} catch(Throwable e)
 			{
 				LOG.info("Failed to get version of cloudflared.");
-				throw new CloudflaredNotFoundException("Cloudflared not found");
+				throw new CloudflaredNotFoundException("Cloudflared not found", e);
 			}
 		} else
 		{
