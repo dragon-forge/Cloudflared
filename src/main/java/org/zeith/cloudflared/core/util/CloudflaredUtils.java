@@ -1,6 +1,5 @@
 package org.zeith.cloudflared.core.util;
 
-import com.zeitheron.hammercore.utils.java.Hashers;
 import org.apache.logging.log4j.*;
 import org.zeith.cloudflared.core.api.*;
 

@@ -1,9 +1,9 @@
 package org.zeith.cloudflared.core.api;
 
-import org.zeith.cloudflared.core.util.HttpRequest;
+import org.zeith.cloudflared.core.util.UploadProgress;
 
 public interface IFileDownload
-		extends HttpRequest.UploadProgress, AutoCloseable
+		extends UploadProgress, AutoCloseable
 {
 	IFileDownload DUMMY = new IFileDownload()
 	{
