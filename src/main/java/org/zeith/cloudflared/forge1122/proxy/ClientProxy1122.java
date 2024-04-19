@@ -26,6 +26,7 @@ import org.zeith.cloudflared.forge1122.client.GuiShareToLanCloudflared;
 import org.zeith.cloudflared.forge1122.command.CommandCloudflared;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.*;
@@ -213,6 +214,15 @@ public class ClientProxy1122
 			Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.CHAT, new TextComponentTranslation(message));
 		else
 			ChatMessageAdapter.sendOnFirstWorldLoad(new TextComponentTranslation(message));
+	}
+	
+	@Override
+	public File getExtraDataDir()
+	{
+		File f = new File(Minecraft.getMinecraft().gameDir, "asm" + File.separator + "Cloudflared");
+		if(f.isFile()) f.delete();
+		if(!f.isDirectory()) f.mkdirs();
+		return f;
 	}
 	
 	@Override
