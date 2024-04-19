@@ -7,6 +7,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.zeith.cloudflared.CloudflaredMod;
 
 @Mod(CloudflaredMod.MOD_ID)
@@ -23,7 +24,7 @@ public class CloudflaredForge
 		DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> CloudflaredForgeClient::setup);
 		DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, () -> CloudflaredForgeServer::setup);
 		
-		CloudflaredMod.init();
+		CloudflaredMod.init(FMLPaths.CONFIGDIR.get().resolve("cloudflared.cfg"));
 	}
 	
 	private void serverStarting(ServerStartingEvent e)

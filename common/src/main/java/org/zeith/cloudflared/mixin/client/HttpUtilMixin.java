@@ -17,7 +17,7 @@ public class HttpUtilMixin
 	)
 	private static void Cloudflared_getAvailablePort(CallbackInfoReturnable<Integer> cir)
 	{
-		int customPortOverride = CloudflaredConfig.customPortOverride;
+		int customPortOverride = CloudflaredConfig.getInstance().hosting.customPortOverride;
 		if(customPortOverride > 0 && customPortOverride < 65535)
 			cir.setReturnValue(customPortOverride);
 	}

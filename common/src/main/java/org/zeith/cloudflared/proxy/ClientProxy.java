@@ -45,7 +45,7 @@ public class ClientProxy
 		{
 			api = CloudflaredAPIFactory.builder()
 					.gameProxy(this)
-					.hostname(() -> CloudflaredConfig.hostname)
+					.hostname(() -> CloudflaredConfig.getInstance().advancedNetwork.hostname)
 					.build()
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)

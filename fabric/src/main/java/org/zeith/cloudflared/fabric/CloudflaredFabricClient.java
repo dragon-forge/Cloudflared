@@ -2,6 +2,7 @@ package org.zeith.cloudflared.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import org.zeith.cloudflared.CloudflaredMod;
 import org.zeith.cloudflared.architectury.IMessageConsumer;
 import org.zeith.cloudflared.proxy.ClientProxy;
@@ -16,7 +17,6 @@ public class CloudflaredFabricClient
 	{
 		CloudflaredMod.PROXY = new ClientProxy(messages);
 		ClientTickEvents.START_CLIENT_TICK.register(client -> messages.clientTick());
-		
-		CloudflaredMod.init();
+		CloudflaredMod.init(FabricLoader.getInstance().getConfigDir().resolve("cloudflared.cfg"));
 	}
 }

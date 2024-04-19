@@ -28,7 +28,7 @@ public class ServerProxy
 		{
 			api = CloudflaredAPIFactory.builder()
 					.gameProxy(this)
-					.hostname(() -> CloudflaredConfig.hostname)
+					.hostname(() -> CloudflaredConfig.getInstance().advancedNetwork.hostname)
 					.build()
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)
@@ -55,7 +55,7 @@ public class ServerProxy
 	public void serverStarted(MinecraftServer server)
 	{
 		if(api != null) api.closeAllAccesses();
-		if(CloudflaredConfig.startTunnel)
+		if(CloudflaredConfig.getInstance().hosting.startTunnel)
 		{
 			server.sendSystemMessage(Component.translatable("chat.cloudflared:starting_tunnel"));
 			startSession(new MCArchGameSession(server.getPort(), UUID.randomUUID(), server));
