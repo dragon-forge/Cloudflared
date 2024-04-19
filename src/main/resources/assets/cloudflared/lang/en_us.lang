@@ -15,7 +15,6 @@ chat.cloudflared:here=here
 
 command.cloudflared:install.installed=Cloudflared is already installed on your system.
 command.cloudflared:install.started=The download process of Cloudflared has been started.
-command.cloudflared:install.started.uac=Expect UAC prompt to confirm Cloudflared installation.
 command.cloudflared:install.unsupported_os=Installation is not supported on your OS (determined as %s). Click %s to open download page.
 command.cloudflared:install.install_done=Installation complete with code %s. Attempting to load cloudflared...
 command.cloudflared:install.ok=Cloudflared software is ready. Version: %s.

@@ -29,9 +29,7 @@ public class ServerProxy1122
 		{
 			api = CloudflaredAPIFactory.builder()
 					.gameProxy(this)
-					.autoDownload(Configs1122.autodownload)
 					.hostname(() -> Configs1122.hostname)
-					.executable(() -> Configs1122.executable)
 					.build()
 					.createApi();
 		} catch(CloudflaredNotFoundException ex)

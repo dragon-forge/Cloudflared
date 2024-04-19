@@ -73,10 +73,10 @@ public class CommandCloudflared
 		public void execute(MinecraftServer server, ICommandSender sender, String[] args)
 				throws CommandException
 		{
-			if(CloudflaredForge.PROXY.getApi().isPresent())
+			if(CloudflaredForge.PROXY.getApi().filter(a -> a.getExecutableFilePath().isFile()).isPresent())
 				throw new CommandException("command.cloudflared:install.installed");
 			
-			CompletableFuture<Integer> wg = CloudflaredUtils.winget();
+			CompletableFuture<Integer> wg = CloudflaredUtils.download(CloudflaredForge.PROXY);
 			
 			if(wg.isDone() && wg.join() == null)
 				throw new CommandException("command.cloudflared:install.unsupported_os",
@@ -91,8 +91,6 @@ public class CommandCloudflared
 				);
 			
 			sender.sendMessage(new TextComponentTranslation("command.cloudflared:install.started"));
-			if(OSArch.getArchitecture().getType() == OSArch.OSType.WINDOWS)
-				sender.sendMessage(new TextComponentTranslation("command.cloudflared:install.started.uac"));
 			
 			wg.thenAccept(i ->
 			{

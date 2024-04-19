@@ -7,10 +7,11 @@ import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 import org.zeith.cloudflared.core.process.*;
 import org.zeith.cloudflared.core.util.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 
 import static org.zeith.cloudflared.core.util.CloudflaredVersion.CFD_VER_REGEX;
@@ -23,7 +24,11 @@ public class CloudflaredAPI
 	
 	private final Map<String, CFDAccess> allAccesses = new ConcurrentHashMap<>();
 	private final CloudflaredAPIListeners listeners = new CloudflaredAPIListeners(this);
-	protected final CloudflaredVersion version;
+	protected CloudflaredVersion version;
+	
+	protected final Supplier<String> executable;
+	
+	protected final File executableFilePath;
 	
 	static
 	{
@@ -35,32 +40,55 @@ public class CloudflaredAPI
 	{
 		this.configs = configs;
 		
-		String exe = configs.getExecutable().get();
+		this.executableFilePath = new File(getGame().getExtraDataDir(),
+				"cloudflared" + (OSArch.getArchitecture().getType() == OSArch.OSType.WINDOWS ? ".exe" : "")
+		);
+		
+		this.executable = executableFilePath::getAbsolutePath;
 		
 		CloudflaredVersion ver = null;
-		try
-		{
-			LOG.info("Attempting to get current version of {}...", exe);
-			ver = getVersionFuture().join();
-		} catch(Throwable e)
-		{
-			LOG.info("Failed to get version of {}.", exe);
-			if(!configs.isAutoDownload())
-				throw new CloudflaredNotFoundException("Cloudflared not found");
-		}
+		if(executableFilePath.isFile())
+			try
+			{
+				LOG.info("Attempting to get current version of cloudflared...");
+				ver = getVersionFuture().join();
+			} catch(Throwable e)
+			{
+				LOG.info("Failed to get version of cloudflared.");
+			}
 		
-		if(ver == null && configs.isAutoDownload())
+		if(ver == null)
 		{
 			LOG.info("Attempting to auto-download Cloudflared...");
 			try
 			{
-				CloudflaredUtils.winget().join();
+				CloudflaredUtils.download(configs.getGameProxy()).join();
+			} catch(Throwable e)
+			{
+				LOG.info("Failed to download cloudflared.");
+				throw new CloudflaredNotFoundException("Cloudflared not found");
+			}
+			try
+			{
 				ver = getVersionFuture().join();
 			} catch(Throwable e)
 			{
-				LOG.info("Failed to get version of {}.", exe);
+				LOG.info("Failed to get version of cloudflared.");
 				throw new CloudflaredNotFoundException("Cloudflared not found");
 			}
+		} else
+		{
+			this.version = ver;
+			CloudflaredUtils.download(configs.getGameProxy())
+					.thenCompose(i -> getVersionFuture())
+					.thenAccept(ver2 ->
+					{
+						if(!Objects.equals(this.version, ver2))
+						{
+							LOG.info("Cloudflared has been updated.");
+							this.version = ver2;
+						}
+					});
 		}
 		
 		this.version = ver;
@@ -75,7 +103,7 @@ public class CloudflaredAPI
 	
 	private CompletableFuture<CloudflaredVersion> getVersionFuture()
 	{
-		return CloudflaredUtils.processOut(new ProcessBuilder(configs.getExecutable().get(), "--version"), c -> c == 0).thenApply(s ->
+		return CloudflaredUtils.processOut(new ProcessBuilder(getExecutable().get(), "--version"), c -> c == 0).thenApply(s ->
 		{
 			Matcher matcher = CFD_VER_REGEX.matcher(s);
 			if(!matcher.find()) throw new RuntimeException("Unable to find cloudflared version pattern.");

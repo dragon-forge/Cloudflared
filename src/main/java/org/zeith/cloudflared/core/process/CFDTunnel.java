@@ -45,7 +45,7 @@ public class CFDTunnel
 			{
 				List<String> args = new ArrayList<>();
 				
-				args.add(api.getConfigs().getExecutable().get());
+				args.add(api.getExecutable().get());
 				args.add("tunnel");
 				if(hostname != null && !hostname.isEmpty())
 				{
@@ -57,6 +57,7 @@ public class CFDTunnel
 				
 				Process p = new ProcessBuilder(args.toArray(new String[0]))
 						.redirectInput(ProcessBuilder.Redirect.INHERIT)
+						.redirectOutput(ProcessBuilder.Redirect.INHERIT)
 						.start();
 				
 				this.startedProcess = p;

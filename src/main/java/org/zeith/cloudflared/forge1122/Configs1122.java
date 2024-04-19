@@ -62,23 +62,6 @@ public class Configs1122
 	)
 	public static String hostname = "";
 	
-	@ModConfigPropertyString(
-			name = "Cloudflared Executable",
-			category = "Local Install",
-			defaultValue = "cloudflared",
-			allowedValues = { },
-			comment = "Which file should be used for executing commands?"
-	)
-	public static String executable = "cloudflared";
-	
-	@ModConfigPropertyBool(
-			name = "Auto-Download Cloudflared",
-			category = "Local Install",
-			defaultValue = false,
-			comment = "Should the mod attempt auto-download Cloudflared?\nGenerally not recommended, but is available for Windows and MacOS."
-	)
-	public static boolean autodownload;
-	
 	@ModConfigPropertyBool(
 			name = "Start Tunnel",
 			category = "Hosting",
