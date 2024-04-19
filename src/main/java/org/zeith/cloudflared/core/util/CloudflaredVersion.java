@@ -1,7 +1,10 @@
 package org.zeith.cloudflared.core.util;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.regex.Pattern;
 
+@EqualsAndHashCode
 public class CloudflaredVersion
 {
 	public static final Pattern CFD_VER_REGEX = Pattern.compile("(?<version>\\d\\S+).+\\s(?<built>\\d[^)]+)");

@@ -12,12 +12,7 @@ import java.util.function.Supplier;
 public class CloudflaredAPIFactory
 {
 	@Builder.Default
-	protected Supplier<String> executable = () -> "cloudflared";
-	
-	@Builder.Default
 	protected Supplier<String> hostname = () -> null;
-	
-	protected boolean autoDownload;
 	
 	protected final IGameProxy gameProxy;
 	
