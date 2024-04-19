@@ -21,6 +21,17 @@ public class ServerAddressMixin
 		if(addr != null) cir.setReturnValue(addr);
 	}
 	
+	@Inject(
+			method = "isValidAddress",
+			at = @At("HEAD"),
+			cancellable = true
+	)
+	private static void Cloudflared_isValidAddress(String string, CallbackInfoReturnable<Boolean> cir)
+	{
+		var addr = decodeAddress(string);
+		if(addr != null) cir.setReturnValue(true);
+	}
+	
 	private static ServerAddress decodeAddress(String input)
 	{
 		if(!input.startsWith("cloudflared://")) return null;
