@@ -1,6 +1,8 @@
 package org.zeith.cloudflared.forge1122.coremod;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -12,7 +14,13 @@ public class CloudflaredCoremod1122
 {
 	public static boolean runtimeDeobfEnabled = false;
 	
-	private final String[] transformers = new String[] { HttpUtilTransformer.class.getName(), ServerAddressTransformer.class.getName() };
+	static final Logger LOG = LogManager.getLogger("Cloudflared/ASM");
+	
+	private final String[] transformers = new String[] {
+			HttpUtilTransformer.class.getName(),
+			ServerAddressTransformer.class.getName(),
+			IntegratedServerTransformer.class.getName()
+	};
 	
 	@Override
 	public String[] getASMTransformerClass()

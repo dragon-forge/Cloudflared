@@ -2,33 +2,32 @@ package org.zeith.cloudflared.forge1122.proxy;
 
 import com.zeitheron.hammercore.client.adapter.ChatMessageAdapter;
 import com.zeitheron.hammercore.client.utils.gl.shading.VariableShaderProgram;
-import com.zeitheron.hammercore.utils.*;
+import com.zeitheron.hammercore.utils.FileSizeMetric;
+import com.zeitheron.hammercore.utils.ReflectionUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.toasts.*;
+import net.minecraft.client.gui.toasts.GuiToast;
+import net.minecraft.client.gui.toasts.SystemToast;
 import net.minecraft.client.multiplayer.ServerAddress;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.text.*;
-import net.minecraft.util.text.event.*;
+import net.minecraft.util.text.event.ClickEvent;
+import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.ProgressManager;
 import net.minecraftforge.fml.common.event.*;
-import net.minecraftforge.fml.common.eventhandler.*;
-import org.zeith.cloudflared.core.*;
+import org.zeith.cloudflared.core.CloudflaredAPI;
+import org.zeith.cloudflared.core.CloudflaredAPIFactory;
 import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 import org.zeith.cloudflared.core.process.CFDAccess;
 import org.zeith.cloudflared.forge1122.*;
-import org.zeith.cloudflared.forge1122.client.GuiShareToLanCloudflared;
 import org.zeith.cloudflared.forge1122.command.CommandCloudflared;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Optional;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -41,6 +40,23 @@ public class ClientProxy1122
 	public IGameSession startedSession;
 	
 	protected Thread gameThread;
+	
+	public static void onSharedToLan(IntegratedServer server, int port)
+	{
+		if(!CloudflaredForge.PROXY.getApi().isPresent()) return;
+		
+		server.setAllowPvp(Configs1122.enablePvP);
+		server.setOnlineMode(Configs1122.onlineMode);
+		server.setCanSpawnAnimals(Configs1122.canSpawnAnimals);
+		server.setCanSpawnNPCs(Configs1122.canSpawnNPCs);
+		
+		if(Configs1122.startTunnel)
+		{
+			Minecraft mc = Minecraft.getMinecraft();
+			mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentTranslation("chat.cloudflared:starting_tunnel"));
+			CloudflaredForge.PROXY.startSession(new MCGameSession1122(port, mc.player.getGameProfile().getId(), mc.player));
+		}
+	}
 	
 	@Override
 	public void tryCreateApi()
@@ -131,25 +147,6 @@ public class ClientProxy1122
 					));
 		}
 		ClientCommandHandler.instance.registerCommand(new CommandCloudflared());
-		MinecraftForge.EVENT_BUS.register(this);
-	}
-	
-	@SubscribeEvent(priority = EventPriority.HIGH)
-	public void overrideShareToLanGUI(GuiOpenEvent e)
-	{
-		if(e.getGui() instanceof GuiShareToLan && api != null)
-		{
-			try
-			{
-				Field f = GuiShareToLan.class.getDeclaredFields()[0];
-				f.setAccessible(true);
-				GuiScreen gs = (GuiScreen) f.get(e.getGui());
-				e.setGui(new GuiShareToLanCloudflared(gs));
-			} catch(ReflectiveOperationException err)
-			{
-				CloudflaredForge.LOG.error("Failed to open GuiShareToLanCloudflared.", err);
-			}
-		}
 	}
 	
 	@Override
@@ -184,6 +181,7 @@ public class ClientProxy1122
 		return Optional.ofNullable(api);
 	}
 	
+	@Override
 	public List<IGameListener> getListeners()
 	{
 		return Collections.unmodifiableList(listeners);

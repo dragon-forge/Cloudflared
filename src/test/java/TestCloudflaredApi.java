@@ -1,8 +1,12 @@
-import org.zeith.cloudflared.core.*;
+import org.zeith.cloudflared.core.CloudflaredAPI;
+import org.zeith.cloudflared.core.CloudflaredAPIFactory;
 import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class TestCloudflaredApi
 		implements IGameProxy
@@ -50,5 +54,11 @@ public class TestCloudflaredApi
 	public void createToast(InfoLevel level, String title, String subtitle)
 	{
 		System.out.println("[" + level.name() + "] " + title + "\n" + subtitle + "\n");
+	}
+	
+	@Override
+	public List<IGameListener> getListeners()
+	{
+		return Collections.emptyList();
 	}
 }

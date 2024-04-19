@@ -4,7 +4,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.common.event.*;
-import org.zeith.cloudflared.core.*;
+import org.zeith.cloudflared.core.CloudflaredAPI;
+import org.zeith.cloudflared.core.CloudflaredAPIFactory;
 import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 import org.zeith.cloudflared.forge1122.*;
@@ -44,6 +45,12 @@ public class ServerProxy1122
 		startedSession = session;
 		for(IGameListener listener : listeners)
 			listener.onHostingStart(session);
+	}
+	
+	@Override
+	public List<IGameListener> getListeners()
+	{
+		return listeners;
 	}
 	
 	@Override

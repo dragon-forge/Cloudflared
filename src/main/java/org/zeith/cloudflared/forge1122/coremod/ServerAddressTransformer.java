@@ -23,6 +23,8 @@ public class ServerAddressTransformer
 	
 	private void processServerAddress(ClassNode node)
 	{
+		CloudflaredCoremod1122.LOG.info("Transforming ServerAddress");
+		
 		String cSign = "L" + node.name + ";";
 		for(MethodNode method : node.methods)
 		{
@@ -33,6 +35,8 @@ public class ServerAddressTransformer
 	
 	private void patchFromString(MethodNode node)
 	{
+		CloudflaredCoremod1122.LOG.info(" - Patching ServerAddress.fromString");
+		
 		LabelNode l1 = new LabelNode();
 		LabelNode l2 = new LabelNode();
 		

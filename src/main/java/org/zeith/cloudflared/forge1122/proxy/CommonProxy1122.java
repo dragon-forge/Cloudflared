@@ -6,6 +6,7 @@ import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.forge1122.MCGameSession1122;
 
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 
 public interface CommonProxy1122

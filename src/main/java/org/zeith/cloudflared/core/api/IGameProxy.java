@@ -1,6 +1,7 @@
 package org.zeith.cloudflared.core.api;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public interface IGameProxy
@@ -14,6 +15,8 @@ public interface IGameProxy
 	void sendChatMessage(String message);
 	
 	void createToast(InfoLevel level, String title, String subtitle);
+	
+	List<IGameListener> getListeners();
 	
 	default IFileDownload pushFileDownload()
 	{

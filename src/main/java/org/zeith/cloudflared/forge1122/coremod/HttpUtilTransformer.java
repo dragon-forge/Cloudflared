@@ -23,6 +23,8 @@ public class HttpUtilTransformer
 	
 	private void processHttpUtil(ClassNode node)
 	{
+		CloudflaredCoremod1122.LOG.info("Transforming HttpUtil");
+		
 		for(MethodNode method : node.methods)
 		{
 			if(method.desc.equals("()I") && (method.name.equals("a") || method.name.equals("getSuitableLanPort")))
@@ -32,6 +34,8 @@ public class HttpUtilTransformer
 	
 	private void patchGetSuitableLanPort(MethodNode node)
 	{
+		CloudflaredCoremod1122.LOG.info(" - Patching HttpUtil.getSuitableLanPort");
+		
 		LabelNode l1 = new LabelNode();
 		LabelNode l2 = new LabelNode();
 		

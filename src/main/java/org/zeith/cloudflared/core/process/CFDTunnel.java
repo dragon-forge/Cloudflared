@@ -1,181 +1,134 @@
 package org.zeith.cloudflared.core.process;
 
-import com.google.common.base.Suppliers;
 import lombok.Getter;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zeith.cloudflared.core.CloudflaredAPI;
-import org.zeith.cloudflared.core.api.*;
+import org.zeith.cloudflared.core.api.IGameSession;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CFDTunnel
-		extends Thread
-		implements ITunnel
+		extends BaseTunnel
 {
 	public static final Pattern URL_REGEX = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)");
 	private static final Logger LOG = LogManager.getLogger("CloudflaredTunnel");
 	
 	@Getter
-	protected final CloudflaredAPI api;
-	
-	@Getter
 	protected final IGameSession session;
 	
-	private final Supplier<Process> process;
-	private Process startedProcess;
+	protected final String hostname;
+	protected final int port;
 	
 	@Getter
 	private String generatedHostname;
 	
+	private boolean waitingForHostname = false;
+	private boolean registered = false;
+	
 	public CFDTunnel(IGameSession session, CloudflaredAPI api, int port, String hostname)
 	{
-		super(TunnelThreadGroup.GROUP, "CFDTunnelThread[Ingress=" + port + "->Egress=" + hostname + "]");
+		super(api, "CFDTunnelThread[Ingress=" + port + "->Egress=" + hostname + "]");
+		this.hostname = hostname;
+		this.port = port;
 		this.session = session;
-		this.api = api;
-		this.process = Suppliers.memoize(() ->
-		{
-			String localAddr = "tcp://127.0.0.1:" + port;
-			
-			LOG.info("Starting tunnel pointing to {}...", localAddr);
-			try
-			{
-				List<String> args = new ArrayList<>();
-				
-				args.add(api.getExecutable().get());
-				args.add("tunnel");
-				if(hostname != null && !hostname.isEmpty())
-				{
-					args.add("--hostname");
-					args.add(hostname);
-				}
-				args.add("--url");
-				args.add(localAddr);
-				
-				Process p = new ProcessBuilder(args.toArray(new String[0]))
-						.redirectInput(ProcessBuilder.Redirect.INHERIT)
-						.redirectOutput(ProcessBuilder.Redirect.INHERIT)
-						.start();
-				
-				this.startedProcess = p;
-				
-				LOG.info("Tunnel to {} started.", localAddr);
-				
-				return p;
-			} catch(IOException e)
-			{
-				throw new RuntimeException(e);
-			}
-		});
-	}
-	
-	void markOpen()
-	{
-		session.onTunnelOpen(this);
 	}
 	
 	@Override
-	public void run()
+	protected Process createProcess()
 	{
-		startedProcess = this.process.get();
-		try(Scanner in = new Scanner(startedProcess.getErrorStream()))
+		String localAddr = "tcp://127.0.0.1:" + port;
+		
+		LOG.info("Starting tunnel pointing to {}...", localAddr);
+		try
 		{
-			boolean qtf = false;
-			boolean registered = false;
+			List<String> args = new ArrayList<>();
 			
-			while(in.hasNextLine())
+			args.add(api.getExecutable().get());
+			args.add("tunnel");
+			if(hostname != null && !hostname.isEmpty())
 			{
-				String ln = in.nextLine().split("\\s", 3)[2];
-				
-				if(!registered)
-				{
-					if(ln.contains("Registered"))
-					{
-						markOpen();
-						registered = true;
-					}
-					
-					if(ln.contains("Failed"))
-					{
-						api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
-					}
-					
-					if(ln.contains("Retrying"))
-					{
-						api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
-					}
-				}
-				
-				if(generatedHostname == null)
-				{
-					if(ln.contains("Visit it at"))
-					{
-						Matcher m = URL_REGEX.matcher(ln);
-						if(m.find())
-						{
-							generatedHostname = m.group();
-							qtf = false;
-							continue;
-						}
-						qtf = true;
-					}
-					
-					if(qtf)
-					{
-						Matcher m = URL_REGEX.matcher(ln);
-						if(m.find())
-						{
-							generatedHostname = m.group();
-							qtf = false;
-							continue;
-						}
-					}
-				}
-				
-				System.out.println(ln);
+				args.add("--hostname");
+				args.add(hostname);
 			}
+			args.add("--url");
+			args.add(localAddr);
 			
-			startedProcess.waitFor();
-			startedProcess = null;
-		} catch(InterruptedException ignored)
+			Process p = new ProcessBuilder(args.toArray(new String[0]))
+					.redirectInput(ProcessBuilder.Redirect.INHERIT)
+					.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+					.start();
+			
+			this.startedProcess = p;
+			
+			LOG.info("Tunnel to {} started.", localAddr);
+			
+			return p;
+		} catch(IOException e)
 		{
-			LOG.error("Access forcefully interrupted.");
-		} catch(Exception e)
-		{
-			LOG.error("Failed to launch tunnel:", e);
+			throw new RuntimeException(e);
 		}
 	}
 	
 	@Override
-	public void interrupt()
+	protected void markOpen()
 	{
-		if(startedProcess != null)
+		session.onTunnelOpen(this);
+		super.markOpen();
+	}
+	
+	@Override
+	protected void processLn(String ln)
+	{
+		if(!registered)
 		{
-			startedProcess.destroy();
-			try
+			if(ln.contains("Registered"))
 			{
-				if(startedProcess.waitFor(10L, TimeUnit.SECONDS))
-				{
-					int code = startedProcess.exitValue();
-					LOG.info("Tunnel stopped with exit value {}.", code);
-				}
-			} catch(Exception e)
+				markOpen();
+				registered = true;
+			}
+			
+			if(ln.contains("Failed"))
 			{
-				LOG.error("Failed to wait until tunnel shutdown. Sending force-destroy instruction.");
-				startedProcess.destroyForcibly();
-				startedProcess = null;
+				api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
+			}
+			
+			if(ln.contains("Retrying"))
+			{
+				api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
 			}
 		}
 		
-		super.interrupt();
-	}
-	
-	@Override
-	public void closeTunnel()
-	{
-		interrupt();
+		if(generatedHostname == null)
+		{
+			if(ln.contains("Visit it at"))
+			{
+				Matcher m = URL_REGEX.matcher(ln);
+				if(m.find())
+				{
+					generatedHostname = m.group();
+					waitingForHostname = false;
+					return;
+				}
+				waitingForHostname = true;
+			}
+			
+			if(waitingForHostname)
+			{
+				Matcher m = URL_REGEX.matcher(ln);
+				if(m.find())
+				{
+					generatedHostname = m.group();
+					waitingForHostname = false;
+					return;
+				}
+			}
+		}
+		
+		System.out.println(ln);
 	}
 }
