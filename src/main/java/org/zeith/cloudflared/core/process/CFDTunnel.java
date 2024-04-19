@@ -88,12 +88,25 @@ public class CFDTunnel
 			
 			while(in.hasNextLine())
 			{
-				String ln = in.nextLine();
+				String ln = in.nextLine().split("\\s", 3)[2];
 				
-				if(!registered && ln.contains("Registered tunnel connection"))
+				if(!registered)
 				{
-					markOpen();
-					registered = true;
+					if(ln.contains("Registered"))
+					{
+						markOpen();
+						registered = true;
+					}
+					
+					if(ln.contains("Failed"))
+					{
+						api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
+					}
+					
+					if(ln.contains("Retrying"))
+					{
+						api.getGame().sendChatMessage(ln.replaceAll("\\d+\\.\\d+\\.\\d+\\.\\d+", "*.*.*.*"));
+					}
 				}
 				
 				if(generatedHostname == null)
@@ -122,7 +135,7 @@ public class CFDTunnel
 					}
 				}
 				
-				System.out.println(ln.split("\\s", 3)[2]);
+				System.out.println(ln);
 			}
 			
 			startedProcess.waitFor();

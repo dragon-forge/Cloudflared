@@ -89,7 +89,7 @@ public class CloudflaredAPI
 					{
 						if(!Objects.equals(this.version, ver2))
 						{
-							LOG.info("Cloudflared has been updated.");
+							LOG.info("Cloudflared has been updated from {} to {}.", this.version, ver2);
 							this.version = ver2;
 						}
 					});

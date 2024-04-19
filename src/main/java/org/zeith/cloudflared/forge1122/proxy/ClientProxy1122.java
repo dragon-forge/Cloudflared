@@ -209,7 +209,10 @@ public class ClientProxy1122
 	@Override
 	public void sendChatMessage(String message)
 	{
-		ChatMessageAdapter.sendOnFirstWorldLoad(new TextComponentTranslation(message));
+		if(Minecraft.getMinecraft().player != null)
+			Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.CHAT, new TextComponentTranslation(message));
+		else
+			ChatMessageAdapter.sendOnFirstWorldLoad(new TextComponentTranslation(message));
 	}
 	
 	@Override
