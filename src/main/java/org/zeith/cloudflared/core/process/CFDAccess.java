@@ -1,14 +1,16 @@
 package org.zeith.cloudflared.core.process;
 
-import com.google.common.base.Suppliers;
 import lombok.Getter;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zeith.cloudflared.core.CloudflaredAPI;
 import org.zeith.cloudflared.core.api.TunnelThreadGroup;
+import org.zeith.cloudflared.core.util.MemoizingSupplier;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class CFDAccess
@@ -34,7 +36,7 @@ public class CFDAccess
 		super(TunnelThreadGroup.GROUP, "CFDAccessThread[Ingress=" + hostname + "->OnPort=" + localPort + "]");
 		this.api = api;
 		this.localPort = localPort;
-		this.process = Suppliers.memoize(() ->
+		this.process = MemoizingSupplier.of(() ->
 		{
 			String localAddr = "127.0.0.1:" + localPort;
 			

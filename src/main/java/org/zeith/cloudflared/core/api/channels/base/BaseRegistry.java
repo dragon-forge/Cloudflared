@@ -1,7 +1,5 @@
 package org.zeith.cloudflared.core.api.channels.base;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,7 +22,7 @@ public abstract class BaseRegistry
 	protected synchronized void freeze()
 	{
 		this.frozen = true;
-		this.tokens = ImmutableMap.copyOf(tokens);
+//		this.tokens = ImmutableMap.copyOf(tokens);
 	}
 	
 	@SuppressWarnings("unchecked")

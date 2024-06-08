@@ -1,16 +1,19 @@
 package org.zeith.cloudflared.core.process;
 
-import com.google.common.base.Suppliers;
 import lombok.Getter;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zeith.cloudflared.core.CloudflaredAPI;
-import org.zeith.cloudflared.core.api.*;
+import org.zeith.cloudflared.core.api.IGameSession;
+import org.zeith.cloudflared.core.api.TunnelThreadGroup;
+import org.zeith.cloudflared.core.util.MemoizingSupplier;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CFDTunnel
 		extends Thread
@@ -36,7 +39,7 @@ public class CFDTunnel
 		super(TunnelThreadGroup.GROUP, "CFDTunnelThread[Ingress=" + port + "->Egress=" + hostname + "]");
 		this.session = session;
 		this.api = api;
-		this.process = Suppliers.memoize(() ->
+		this.process = MemoizingSupplier.of(() ->
 		{
 			String localAddr = "tcp://127.0.0.1:" + port;
 			
