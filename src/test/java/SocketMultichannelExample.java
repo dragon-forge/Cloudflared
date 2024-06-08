@@ -1,5 +1,6 @@
 import org.zeith.cloudflared.core.api.channels.ChannelDescriptor;
 import org.zeith.cloudflared.core.api.channels.ThreadAllocator;
+import org.zeith.cloudflared.core.api.channels.base.RegistryToken;
 import org.zeith.cloudflared.core.api.channels.dec.DecodingRegistry;
 import org.zeith.cloudflared.core.api.channels.dec.OutputChannel;
 import org.zeith.cloudflared.core.api.channels.enc.EncodingRegistry;
@@ -7,7 +8,7 @@ import org.zeith.cloudflared.core.api.channels.enc.InputChannel;
 import org.zeith.cloudflared.core.api.channels.soc.SocketConfigurations;
 import org.zeith.cloudflared.core.api.channels.soc.SocketWithChannels;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,9 @@ import java.nio.charset.StandardCharsets;
  */
 public class SocketMultichannelExample
 {
+	public static final RegistryToken<PipedOutputStream> OUTPUT_1 = new RegistryToken<>(PipedOutputStream.class, "Output1");
+	public static final RegistryToken<PipedOutputStream> OUTPUT_2 = new RegistryToken<>(PipedOutputStream.class, "Output2");
+	
 	public static void main(String[] args)
 	{
 		SocketConfigurations sessionConfigs = SocketConfigurations.builder()
@@ -26,14 +30,28 @@ public class SocketMultichannelExample
 				{
 					EncodingRegistry reg = new EncodingRegistry();
 					
-					reg.registerChannel((byte) 1, new InputChannel(
+					PipedInputStream pip1 = new PipedInputStream();
+					PipedInputStream pip2 = new PipedInputStream();
+					
+					try
+					{
+						reg.registerToken(OUTPUT_1, new PipedOutputStream(pip1));
+						reg.registerToken(OUTPUT_2, new PipedOutputStream(pip2));
+					} catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					
+					reg.registerChannel((byte) 1, InputChannel.fromStream(
 							new ChannelDescriptor()
-									.with("settings", "sysout x 1")
+									.with("settings", "sysout x 1"),
+							pip1
 					));
 					
-					reg.registerChannel((byte) 2, new InputChannel(
+					reg.registerChannel((byte) 2, InputChannel.fromStream(
 							new ChannelDescriptor()
-									.with("settings", "sysout x 1")
+									.with("settings", "sysout x 1"),
+							pip2
 					));
 					
 					return reg;
@@ -81,6 +99,8 @@ public class SocketMultichannelExample
 			Socket acceptedClient = host.accept();
 			
 			SocketWithChannels swc = SocketWithChannels.wrap(sessionConfigs, acceptedClient).start();
+			PipedOutputStream pop1 = swc.getEncoderToken(OUTPUT_1);
+			PipedOutputStream pop2 = swc.getEncoderToken(OUTPUT_2);
 			
 			long start = System.currentTimeMillis();
 			while(System.currentTimeMillis() - start < 10000L)
@@ -88,11 +108,11 @@ public class SocketMultichannelExample
 				Thread.sleep(450L);
 				if(Math.random() > 0.5)
 				{
-					swc.write((byte) 1, "Hello on channel 1 from server!".getBytes(StandardCharsets.UTF_8));
+					pop1.write("Hello on channel 1 from server!".getBytes(StandardCharsets.UTF_8));
 					swc.flush();
 				} else
 				{
-					swc.write((byte) 2, "Hello on channel 2 from server!!".getBytes(StandardCharsets.UTF_8));
+					pop2.write("Hello on channel 2 from server!!".getBytes(StandardCharsets.UTF_8));
 					swc.flush();
 				}
 			}
@@ -128,6 +148,8 @@ public class SocketMultichannelExample
 			try(Socket so = new Socket("127.0.0.1", port))
 			{
 				SocketWithChannels swc = SocketWithChannels.wrap(sessionConfigs, so).start();
+				PipedOutputStream pop1 = swc.getEncoderToken(OUTPUT_1);
+				PipedOutputStream pop2 = swc.getEncoderToken(OUTPUT_2);
 				ThreadAllocator.startVirtualThread(() ->
 				{
 					try
@@ -139,15 +161,15 @@ public class SocketMultichannelExample
 							Thread.sleep(450L);
 							if(Math.random() > 0.5)
 							{
-								swc.write((byte) 1, "Hello on channel 1 from client!".getBytes(StandardCharsets.UTF_8));
+								pop1.write("Hello on channel 1 from client!".getBytes(StandardCharsets.UTF_8));
 								swc.flush();
 							} else
 							{
-								swc.write((byte) 2, "Hello on channel 2 from client!!".getBytes(StandardCharsets.UTF_8));
+								pop2.write("Hello on channel 2 from client!!".getBytes(StandardCharsets.UTF_8));
 								swc.flush();
 							}
 						}
-					} catch(InterruptedException e)
+					} catch(InterruptedException | IOException e)
 					{
 						throw new RuntimeException(e);
 					}

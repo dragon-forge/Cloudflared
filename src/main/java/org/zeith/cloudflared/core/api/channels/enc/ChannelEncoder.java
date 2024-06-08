@@ -46,20 +46,17 @@ public class ChannelEncoder
 			input.descriptor.write(raw);
 		}
 		
-		Semaphore lock = registry.wakeupLock;
 		do
 		{
-			lock.acquire();
-			
 			boolean allClosed = true;
 			for(byte channel : registry.getUsedChannels())
 			{
 				InputChannel input = registry.getInput(channel);
 				if(!input.isClosed()) allClosed = false;
 				if(!input.hasNewData()) continue;
+				byte[] data = input.readNewData();
 				output.setChannel(channel);
-				output.write(input.getData());
-				input.dropData();
+				output.write(data);
 			}
 			flushSync.release();
 			if(allClosed) break;
@@ -74,7 +71,6 @@ public class ChannelEncoder
 			throws IOException
 	{
 		closed = true;
-		registry.wakeup.run();
 	}
 	
 	public void join()
@@ -87,7 +83,6 @@ public class ChannelEncoder
 	public void flush()
 			throws InterruptedException
 	{
-		registry.wakeup.run();
 		flushSync.acquire();
 	}
 	

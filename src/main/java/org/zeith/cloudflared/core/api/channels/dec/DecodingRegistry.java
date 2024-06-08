@@ -1,18 +1,15 @@
 package org.zeith.cloudflared.core.api.channels.dec;
 
+import org.zeith.cloudflared.core.api.channels.base.BaseRegistry;
+
 import java.io.InputStream;
 import java.util.*;
 
 public class DecodingRegistry
+	extends BaseRegistry
 {
-	protected boolean frozen;
 	protected final Map<Byte, DecodedChannelFactory> channels = new HashMap<>();
 	protected final List<ConfigureListener> channelConfigureListeners = new ArrayList<>();
-	
-	synchronized void freeze()
-	{
-		this.frozen = true;
-	}
 	
 	public synchronized void registerChannel(byte channel, DecodedChannelFactory input)
 	{

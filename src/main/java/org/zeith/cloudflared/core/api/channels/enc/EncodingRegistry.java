@@ -1,39 +1,25 @@
 package org.zeith.cloudflared.core.api.channels.enc;
 
+import org.zeith.cloudflared.core.api.channels.base.BaseRegistry;
+
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Semaphore;
 
 public class EncodingRegistry
+	extends BaseRegistry
 {
-	final Semaphore wakeupLock = new Semaphore(0);
-	
-	private boolean frozen = false;
-	
 	private final ByteArrayOutputStream usedChannels = new ByteArrayOutputStream();
 	private byte[] channelsCache;
 	
 	private final Map<Byte, InputChannel> channels = new HashMap<>();
-	protected final Runnable wakeup = () ->
-	{
-		synchronized(wakeupLock)
-		{
-			wakeupLock.release();
-		}
-	};
-	
-	synchronized void freeze()
-	{
-		this.frozen = true;
-	}
 	
 	public synchronized void registerChannel(byte channel, InputChannel input)
 	{
 		if(frozen) throw new IllegalStateException("Channel registry is frozen and can not accept registration on channel " + channel + ".");
 		if(channels.containsKey(channel)) throw new IllegalArgumentException("Channel " + channel + " is already in use.");
-		channels.put(channel, input.addDataAppearedListener(wakeup));
+		channels.put(channel, input);
 		usedChannels.write(channel);
 	}
 	
@@ -54,7 +40,6 @@ public class EncodingRegistry
 			value.close();
 		channels.clear();
 		usedChannels.reset();
-		wakeup.run();
 	}
 	
 	public ChannelEncoder createThread(OutputStream out)

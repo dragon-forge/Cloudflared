@@ -1,8 +1,8 @@
 package org.zeith.cloudflared.core.api.channels.soc;
 
+import org.zeith.cloudflared.core.api.channels.base.RegistryToken;
 import org.zeith.cloudflared.core.api.channels.dec.ChannelDecoder;
 import org.zeith.cloudflared.core.api.channels.enc.ChannelEncoder;
-import org.zeith.cloudflared.core.api.channels.enc.InputChannel;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -22,22 +22,19 @@ public class SocketWithChannels
 		this.configurations = configurations;
 	}
 	
+	public <T> T getEncoderToken(RegistryToken<T> token)
+	{
+		return encoder.getRegistry().getToken(token);
+	}
+	
+	public <T> T getDecoderToken(RegistryToken<T> token)
+	{
+		return encoder.getRegistry().getToken(token);
+	}
+	
 	public static SocketWithChannels wrap(SocketConfigurations configurations, Socket socket)
 	{
 		return new SocketWithChannels(socket, configurations);
-	}
-	
-	public boolean write(byte channel, byte[] data)
-	{
-		return write(channel, data, 0, data.length);
-	}
-	
-	public boolean write(byte channel, byte[] data, int offset, int length)
-	{
-		InputChannel ch = encoder.getRegistry().getInput(channel);
-		if(ch == null) return false;
-		ch.appendData(data, offset, length);
-		return true;
 	}
 	
 	public SocketWithChannels start()
