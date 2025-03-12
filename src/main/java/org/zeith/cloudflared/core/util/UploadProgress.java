@@ -1,25 +1,8 @@
 package org.zeith.cloudflared.core.util;
 
-/**
- * Callback interface for reporting upload progress for a request.
- */
-public interface UploadProgress
-{
-	/**
-	 * Callback invoked as data is uploaded by the request.
-	 *
-	 * @param uploaded
-	 * 		The number of bytes already uploaded
-	 * @param total
-	 * 		The total number of bytes that will be uploaded or -1 if
-	 * 		the length is unknown.
-	 */
-	void onUpload(long uploaded, long total);
-	
-	UploadProgress DEFAULT = new UploadProgress()
-	{
-		public void onUpload(long uploaded, long total)
-		{
-		}
-	};
+public interface UploadProgress {
+
+    UploadProgress DEFAULT = (uploaded, total) -> {};
+
+    void onUpload(long paramLong1, long paramLong2);
 }
