@@ -1,4 +1,34 @@
-
 plugins {
     id 'com.gtnewhorizons.gtnhconvention'
+    id 'signing'
+}
+
+
+
+tasks.register('signJar') {
+    dependsOn reobfJar
+    def keyStore = System.env.MC_KS_PATH
+    onlyIf { // Skip the task if our secret data isn't available
+        System.env.MC_KS_PASS != null
+    }
+    def alias = System.env.MC_KS_ALIAS
+    def storePass = System.env.MC_KS_PASS
+    def keyPass = System.env.MC_KS_PASS
+    def input = jar.archiveFile
+    inputs.files jar.outputs.files
+    jar.outputs.files.forEach {
+        outputs.file jar.destinationDirectory.file("signed/" + it.name)
+    }
+    doLast {
+        mkdir new File(jar.destinationDirectory.get().asFile, "signed").toString()
+        jar.outputs.files.forEach {
+            ant.signjar destDir: new File(jar.destinationDirectory.get().asFile, "signed"),
+                    sigfile: alias,
+                    keystore: keyStore,
+                    alias: alias,
+                    storepass: storePass,
+                    keypass: keyPass,
+                    jar: it
+        }
+    }
 }
