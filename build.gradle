@@ -3,8 +3,6 @@ plugins {
     id 'signing'
 }
 
-
-
 tasks.register('signJar') {
     dependsOn reobfJar
     def keyStore = System.env.MC_KS_PATH
@@ -14,15 +12,13 @@ tasks.register('signJar') {
     def alias = System.env.MC_KS_ALIAS
     def storePass = System.env.MC_KS_PASS
     def keyPass = System.env.MC_KS_PASS
-    def input = jar.archiveFile
-    inputs.files jar.outputs.files
-    jar.outputs.files.forEach {
-        outputs.file jar.destinationDirectory.file("signed/" + it.name)
-    }
+
     doLast {
-        mkdir new File(jar.destinationDirectory.get().asFile, "signed").toString()
-        jar.outputs.files.forEach {
-            ant.signjar destDir: new File(jar.destinationDirectory.get().asFile, "signed"),
+        def signPath = new File(jar.destinationDirectory.get().asFile, "signed")
+        mkdir signPath.toString()
+        reobfJar.outputs.files.files.each {
+            println("Signing $it...")
+            ant.signjar destDir: signPath,
                     sigfile: alias,
                     keystore: keyStore,
                     alias: alias,
@@ -32,3 +28,5 @@ tasks.register('signJar') {
         }
     }
 }
+
+reobfJar.finalizedBy signJar
