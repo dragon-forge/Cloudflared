@@ -14,7 +14,8 @@ tasks.register('signJar') {
     def keyPass = System.env.MC_KS_PASS
 
     doLast {
-        def signPath = new File(jar.destinationDirectory.get().asFile, "signed")
+        def libsDir = jar.destinationDirectory.get().asFile
+        def signPath = new File(libsDir, "signed")
         mkdir signPath.toString()
         reobfJar.outputs.files.files.each {
             println("Signing $it...")
@@ -25,6 +26,12 @@ tasks.register('signJar') {
                     storepass: storePass,
                     keypass: keyPass,
                     jar: it
+            println("Moving $it back!")
+        }
+        signPath.listFiles().each {
+            def unsigned = new File(libsDir, it.name)
+            if (unsigned.delete()) println("Deleted unsigned version.")
+            it.renameTo(unsigned)
         }
     }
 }
