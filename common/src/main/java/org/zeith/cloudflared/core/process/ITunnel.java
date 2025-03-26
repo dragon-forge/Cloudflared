@@ -1,6 +1,5 @@
 package org.zeith.cloudflared.core.process;
 
-public interface ITunnel
-{
-	void closeTunnel();
+public interface ITunnel {
+    void closeTunnel();
 }
