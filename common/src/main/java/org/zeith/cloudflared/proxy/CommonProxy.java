@@ -14,42 +14,35 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 public interface CommonProxy
-		extends IGameProxy
-{
-	void tryCreateApi();
-	
-	default void setup()
-	{
-		tryCreateApi();
-	}
-	
-	default void serverStarting(MinecraftServer server)
-	{
-		try
-		{
-			CloudflaredConfig.load();
-		} catch(IOException e)
-		{
-			CloudflaredMod.LOG.error("Failed to load configs.", e);
-		}
-	}
-	
-	void serverStarted(MinecraftServer server);
-	
-	void serverStop();
-	
-	void startSession(MCArchGameSession session);
-	
-	Optional<CloudflaredAPI> getApi();
-	
-	default File getLatestLogFile()
-	{
-		return new File("logs");
-	}
-	
-	@Override
-	default ExecutorService getBackgroundExecutor()
-	{
-		return Util.backgroundExecutor();
-	}
+        extends IGameProxy {
+    void tryCreateApi();
+
+    default void setup() {
+        tryCreateApi();
+    }
+
+    default void serverStarting(MinecraftServer server) {
+        try {
+            CloudflaredConfig.load();
+        } catch (IOException e) {
+            CloudflaredMod.LOG.error("Failed to load configs.", e);
+        }
+    }
+
+    void serverStarted(MinecraftServer server);
+
+    void serverStop();
+
+    void startSession(MCArchGameSession session);
+
+    Optional<CloudflaredAPI> getApi();
+
+    default File getLatestLogFile() {
+        return new File("logs");
+    }
+
+    @Override
+    default ExecutorService getBackgroundExecutor() {
+        return Util.backgroundExecutor();
+    }
 }
