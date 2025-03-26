@@ -2,12 +2,11 @@
   "schemaVersion": 1,
   "id": "cloudflared",
   "version": "${version}",
-
   "name": "Cloudflared",
   "description": "This mod adds allows playing LAN using Cloudflare Zero-Trust Argo Tunnels (through cloudflared software)",
   "authors": [
     {
-      "name": "Zeitheron",
+      "name": "Zeitheron, MrEnder",
       "contact": {
         "homepage": "https://me.zeith.org"
       }
@@ -18,10 +17,8 @@
     "homepage": "https://mcdoc.zeith.org/docs/category/cloudflared",
     "issues": "https://github.com/dragon-forge/Cloudflared/issues"
   },
-
   "license": "All Rights Reserved",
   "icon": "icon.png",
-
   "environment": "*",
   "entrypoints": {
     "main": [
@@ -39,7 +36,7 @@
     "cloudflared-common.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.15.10",
-    "minecraft": ">=1.19.2"
+    "fabricloader": "0.16.10",
+    "minecraft": "1.18.2"
   }
 }
