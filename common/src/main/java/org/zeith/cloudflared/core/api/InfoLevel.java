@@ -1,8 +1,7 @@
 package org.zeith.cloudflared.core.api;
 
-public enum InfoLevel
-{
-	INFO,
-	WARNING,
-	CRITICAL;
+public enum InfoLevel {
+    INFO,
+    WARNING,
+    CRITICAL;
 }
