@@ -28,6 +28,9 @@ public class CommandCloudflared extends CommandBase {
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
         MinecraftServer server = MinecraftServer.getServer();
+        if (server == null) {
+            return false;
+        }
         if (server.isDedicatedServer()) return sender instanceof MinecraftServer;
         return Objects.equals(
             server.getServerOwner(),
