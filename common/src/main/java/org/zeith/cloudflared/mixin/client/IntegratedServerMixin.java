@@ -10,11 +10,9 @@ import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.zeith.cloudflared.CloudflaredConfig;
-import org.zeith.cloudflared.CloudflaredMod;
+import org.zeith.cloudflared.*;
 import org.zeith.cloudflared.architectury.MCArchGameSession;
 
 import java.net.Proxy;
@@ -27,6 +25,8 @@ public abstract class IntegratedServerMixin
 	@Final
 	private Minecraft minecraft;
 	
+	@Shadow private int publishedPort;
+	
 	public IntegratedServerMixin(Thread thread, LevelStorageSource.LevelStorageAccess levelStorageAccess, PackRepository packRepository, WorldStem worldStem, Proxy proxy, DataFixer dataFixer, Services services, ChunkProgressListenerFactory chunkProgressListenerFactory)
 	{
 		super(thread, levelStorageAccess, packRepository, worldStem, proxy, dataFixer, services, chunkProgressListenerFactory);
@@ -34,16 +34,16 @@ public abstract class IntegratedServerMixin
 	
 	@Inject(
 			method = "publishServer",
-			at = @At("HEAD")
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;setPermissionLevel(I)V")
 	)
-	private void Cloudflared_publishServer(GameType gameType, boolean cheats, int port, CallbackInfoReturnable<Boolean> cir)
+	private void Cloudflared_publishServer(GameType gameType, boolean bl, int i, CallbackInfoReturnable<Boolean> cir)
 	{
 		CloudflaredConfig.Hosting hosting = CloudflaredConfig.getInstance().hosting;
 		
 		if(hosting.startTunnel)
 		{
 			minecraft.gui.getChat().addMessage(Component.translatable("chat.cloudflared:starting_tunnel"));
-			CloudflaredMod.PROXY.startSession(new MCArchGameSession(port, minecraft.player.getUUID(), minecraft.player));
+			CloudflaredMod.PROXY.startSession(new MCArchGameSession(publishedPort, minecraft.player.getUUID(), minecraft.player));
 		}
 		
 		setUsesAuthentication(hosting.onlineMode);

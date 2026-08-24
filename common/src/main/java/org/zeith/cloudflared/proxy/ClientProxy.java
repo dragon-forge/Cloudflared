@@ -1,23 +1,19 @@
 package org.zeith.cloudflared.proxy;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.toasts.Toast;
-import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.toasts.*;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.network.chat.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-import org.zeith.cloudflared.CloudflaredConfig;
-import org.zeith.cloudflared.CloudflaredMod;
-import org.zeith.cloudflared.architectury.IMessageConsumer;
-import org.zeith.cloudflared.architectury.MCArchGameSession;
-import org.zeith.cloudflared.core.CloudflaredAPI;
-import org.zeith.cloudflared.core.CloudflaredAPIFactory;
+import org.zeith.cloudflared.*;
+import org.zeith.cloudflared.architectury.*;
+import org.zeith.cloudflared.core.*;
 import org.zeith.cloudflared.core.api.*;
 import org.zeith.cloudflared.core.exceptions.CloudflaredNotFoundException;
 
@@ -44,10 +40,10 @@ public class ClientProxy
 		try
 		{
 			api = CloudflaredAPIFactory.builder()
-					.gameProxy(this)
-					.hostname(() -> CloudflaredConfig.getInstance().advancedNetwork.hostname)
-					.build()
-					.createApi();
+			                           .gameProxy(this)
+			                           .hostname(() -> CloudflaredConfig.getInstance().advancedNetwork.hostname)
+			                           .build()
+			                           .createApi();
 		} catch(CloudflaredNotFoundException ex)
 		{
 			api = null;
@@ -64,15 +60,15 @@ public class ClientProxy
 		{
 			messages.chat(
 					Component.translatable("chat.cloudflared:not_installed")
-							.append(" ")
-							.append(Component.translatable("chat.cloudflared:not_installed.click")
-									.withStyle(Style.EMPTY
-											.withColor(ChatFormatting.BLUE)
-											.withUnderlined(true)
-											.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/cloudflared install")))
-											.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cloudflared install"))
-									)
-							)
+					         .append(" ")
+					         .append(Component.translatable("chat.cloudflared:not_installed.click")
+					                          .withStyle(Style.EMPTY
+													  .withColor(ChatFormatting.BLUE)
+							                          .withUnderlined(true)
+							                          .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/cloudflared install")))
+							                          .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cloudflared install"))
+											  )
+							 )
 			);
 		}
 	}
@@ -154,6 +150,8 @@ public class ClientProxy
 	public static class ErrorToast
 			implements Toast
 	{
+		private static final ResourceLocation BACKGROUND_SPRITE = ResourceLocation.withDefaultNamespace("toast/system");
+		
 		private final Component title;
 		private final List<FormattedCharSequence> messageLines;
 		private long lastChanged;
@@ -162,7 +160,10 @@ public class ClientProxy
 		
 		public ErrorToast(Component component, @Nullable Component component2)
 		{
-			this(component, nullToEmpty(component2), Math.max(160, 30 + Math.max(Minecraft.getInstance().font.width(component), component2 == null ? 0 : Minecraft.getInstance().font.width(component2))));
+			this(component, nullToEmpty(component2), Math.max(160,
+							30 + Math.max(Minecraft.getInstance().font.width(component), component2 == null ? 0 : Minecraft.getInstance().font.width(component2))
+					)
+			);
 		}
 		
 		private static ImmutableList<FormattedCharSequence> nullToEmpty(@Nullable Component component)
@@ -190,7 +191,7 @@ public class ClientProxy
 		}
 		
 		@Override
-		public Visibility render(PoseStack poseStack, ToastComponent toastComponent, long l)
+		public Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long l)
 		{
 			if(this.changed)
 			{
@@ -198,55 +199,52 @@ public class ClientProxy
 				this.changed = false;
 			}
 			
-			RenderSystem.setShaderTexture(0, TEXTURE);
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 			int i = this.width();
-			int j;
 			if(i == 160 && this.messageLines.size() <= 1)
 			{
-				toastComponent.blit(poseStack, 0, 0, 0, 64, i, this.height());
+				guiGraphics.blitSprite(BACKGROUND_SPRITE, 0, 0, i, this.height());
 			} else
 			{
-				j = this.height();
+				int j = this.height();
 				int m = Math.min(4, j - 28);
-				this.renderBackgroundRow(poseStack, toastComponent, i, 0, 0, 28);
+				this.renderBackgroundRow(guiGraphics, i, 0, 0, 28);
 				
 				for(int n = 28; n < j - m; n += 10)
 				{
-					this.renderBackgroundRow(poseStack, toastComponent, i, 16, n, Math.min(16, j - n - m));
+					this.renderBackgroundRow(guiGraphics, i, 16, n, Math.min(16, j - n - m));
 				}
 				
-				this.renderBackgroundRow(poseStack, toastComponent, i, 32 - m, j - m, m);
+				this.renderBackgroundRow(guiGraphics, i, 32 - m, j - m, m);
 			}
 			
-			if(this.messageLines == null)
+			if(this.messageLines.isEmpty())
 			{
-				toastComponent.getMinecraft().font.draw(poseStack, this.title, 18.0F, 12.0F, -256);
+				guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 18, 12, -256, false);
 			} else
 			{
-				toastComponent.getMinecraft().font.draw(poseStack, this.title, 18.0F, 7.0F, -256);
+				guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 18, 7, -256, false);
 				
-				for(j = 0; j < this.messageLines.size(); ++j)
+				for(int j = 0; j < this.messageLines.size(); ++j)
 				{
-					toastComponent.getMinecraft().font.draw(poseStack, this.messageLines.get(j), 18.0F, (float) (18 + j * 12), -1);
+					guiGraphics.drawString(toastComponent.getMinecraft().font, (FormattedCharSequence) this.messageLines.get(j), 18, 18 + j * 12, -1, false);
 				}
 			}
 			
 			return l - this.lastChanged < 5000L ? Visibility.SHOW : Visibility.HIDE;
 		}
 		
-		private void renderBackgroundRow(PoseStack poseStack, ToastComponent toastComponent, int i, int j, int k, int l)
+		private void renderBackgroundRow(GuiGraphics guiGraphics, int i, int j, int k, int l)
 		{
 			int m = j == 0 ? 20 : 5;
 			int n = Math.min(60, i - m);
-			toastComponent.blit(poseStack, 0, k, 0, 64 + j, m, l);
+			ResourceLocation resourceLocation = BACKGROUND_SPRITE;
+			guiGraphics.blitSprite(resourceLocation, 160, 32, 0, j, 0, k, m, l);
 			
-			for(int o = m; o < i - n; o += 64)
-			{
-				toastComponent.blit(poseStack, o, k, 32, 64 + j, Math.min(64, i - o - n), l);
+			for(int o = m; o < i - n; o += 64) {
+				guiGraphics.blitSprite(resourceLocation, 160, 32, 32, j, o, k, Math.min(64, i - o - n), l);
 			}
 			
-			toastComponent.blit(poseStack, i - n, k, 160 - n, 64 + j, n, l);
+			guiGraphics.blitSprite(resourceLocation, 160, 32, 160 - n, j, i - n, k, n, l);
 		}
 	}
 }

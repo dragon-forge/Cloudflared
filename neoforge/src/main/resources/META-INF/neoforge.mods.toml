@@ -1,0 +1,40 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+issueTrackerURL = "https://github.com/dragon-forge/Cloudflared/issues"
+license = "Zeith Standard Free License"
+
+[[mods]]
+modId = "cloudflared"
+version = "${version}"
+displayName = "Cloudflared"
+authors = "Zeitheron"
+updateJSONURL = "https://api.modrinth.com/updates/w5fammEF/forge_updates.json"
+displayURL = "https://mcdoc.zeith.org/docs/category/cloudflared"
+description = '''
+This mod adds allows playing LAN using Cloudflare Zero-Trust Argo Tunnels (through cloudflared software)
+'''
+logoFile = "logo.png"
+
+[[dependencies.cloudflared]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.cloudflared]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.cloudflared]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.11,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "cloudflared.mixins.json"

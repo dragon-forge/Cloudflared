@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "org.zeith.cloudflared.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+  ],
+  "mixins": [
+	  "client.HttpUtilMixin",
+	  "client.IntegratedServerMixin",
+	  "client.ServerAddressMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
