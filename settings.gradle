@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'cloudflared'
+rootProject.name = 'Cloudflared'
 
 include 'common'
 include 'fabric'
