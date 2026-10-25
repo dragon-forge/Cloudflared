@@ -21,7 +21,9 @@ public class CloudflaredUtils
 			File tmp = new File(to.getAbsolutePath() + ".tmp");
 			
 			try(HttpRequest r = HttpRequest.get(url)
-					.userAgent("Cloudflared Java Agent"))
+					.userAgent("Cloudflared Java Agent")
+					.header("Accept", "*/*")
+			)
 			{
 				int code = r.code();
 				URL u = r.url();
