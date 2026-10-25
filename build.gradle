@@ -108,8 +108,8 @@ dependencies {
     tcImplementation fg.deobf("org.zeith.HammerLib:HammerLib-1.12.2:${config.hl_version}")
 
     ////// UTILITY STUFF //////
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
     compileOnly 'org.jetbrains:annotations:24.0.1'
     ///////////////////////////
 
