@@ -30,7 +30,7 @@ public class CommandCloudflared
 	@Override
 	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
 	{
-		if(server.isDedicatedServer()) return sender instanceof MinecraftServer;
+		if(server != null && server.isDedicatedServer()) return sender instanceof MinecraftServer;
 		return Objects.equals(server.getServerOwner(),
 				sender instanceof EntityPlayer ? ((EntityPlayer) sender).getGameProfile().getName() : "-"
 		);
