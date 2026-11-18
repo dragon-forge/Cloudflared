@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.*;
 import net.minecraftforge.server.command.CommandTreeBase;
+import org.jetbrains.annotations.Nullable;
 import org.zeith.cloudflared.core.CloudflaredAPI;
 import org.zeith.cloudflared.core.util.*;
 import org.zeith.cloudflared.forge1122.CloudflaredForge;
@@ -27,12 +28,16 @@ public class CommandCloudflared
 		return 0;
 	}
 	
+	// Added @Nullable because IntelliJ wrongly assumes server is non-null when called as a client-side command.
 	@Override
-	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
+	public boolean checkPermission(@Nullable MinecraftServer server, ICommandSender sender)
 	{
-		if(server != null && server.isDedicatedServer()) return sender instanceof MinecraftServer;
-		return Objects.equals(server.getServerOwner(),
-				sender instanceof EntityPlayer ? ((EntityPlayer) sender).getGameProfile().getName() : "-"
+		return server == null || (
+				server.isDedicatedServer()
+				? sender instanceof MinecraftServer
+				: Objects.equals(server.getServerOwner(),
+						sender instanceof EntityPlayer ? ((EntityPlayer) sender).getGameProfile().getName() : "-"
+				)
 		);
 	}
 	
